@@ -1,0 +1,44 @@
+            [
+                {
+                    "drill":[
+                        {"moves":"jab, jab, cross, jab, jab, cross"},
+                        {"moves":"left uppercut, left hook, cross, jab, jab, cross"},
+                        {"moves":"jab, cross, left hook, jab, jab, cross"}
+                    ]
+                },
+                {
+                    "drill":[
+                        {"moves":"jab, jab"},
+                        {"moves":"left uppercut, left hook"},
+                        {"moves":"jab, cross"}
+                    ]
+                },
+                {
+                    "drill":[
+                        {"moves":"jab, jab"},
+                        {"moves":"left uppercut, left hook"},
+                        {"moves":"jab, cross"}
+                    ]
+                },
+                                {
+                    "drill":[
+                        {"moves":"lowkick, jab, jab, cross, jab, jab, cross"},
+                        {"moves":"lowkick,left uppercut, left hook, cross, jab, jab, cross"},
+                        {"moves":"lowkick,jab, cross, left hook, jab, jab, cross"}
+                    ]
+                },
+                {
+                    "drill":[
+                        {"moves":"lowkick, jab, jab, cross, jab, jab, cross"},
+                        {"moves":"lowkick,left uppercut, left hook, cross, jab, jab, cross"},
+                        {"moves":"lowkick,jab, cross, left hook, jab, jab, cross"}
+                    ]
+                },
+                {
+                    "drill":[
+                        {"moves":"lowkick,jab, jab"},
+                        {"moves":"lowkick,left uppercut, left hook"},
+                        {"moves":"lowkick,jab, cross"}
+                    ]
+                }  
+            ]
