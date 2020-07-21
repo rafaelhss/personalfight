@@ -233,6 +233,10 @@ function choseTrainningIntent(level, type){
                     return checkLevel(trainning, level) && checkType(trainning, type)
                 });
                 console.log(filteredtrainnings);
+                
+                if(filteredtrainnings.length <= 0){ //enquanto nao enche a bas
+                    filteredtrainnings = trainnings; 
+                }
 
                 var currentTrainning = {}
                 var chosen = Math.floor(Math.random() * filteredtrainnings.length);
