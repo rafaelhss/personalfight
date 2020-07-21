@@ -228,7 +228,7 @@ function choseTrainningIntent(level, type){
                 reject(err);
             } else {
                 var trainnings = JSON.parse(data.Body.toString('utf-8'));           // successful response
-                console.log(trainnings);
+                console.log(data.Body.toString('utf-8'));
                 var filteredtrainnings = trainnings.filter(function(trainning){
                     return checkLevel(trainning, level) && checkType(trainning, type)
                 });
