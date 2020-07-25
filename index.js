@@ -291,7 +291,7 @@ function choseTrainningIntent(level, type){
 function waitForUserMusic(minutes, drilltxt){
     var resptxt = "";
     //var breaktxt = " <break time=\"10s\"/> ";
-    var breakaudio1min = " <audio src=\"https://45f69c3a416c.ngrok.io/audio2.mp3\"/>  ";
+    var breakaudio1min = " <audio src=\"https://personalfight.herokuapp.com/audio2.mp3\"/>  ";
     
     var motivational = [" Go!Go!Go! ", " Keep going. ", " Don't stop! ", " Focus!Focus!Focus! ", " Go champ! "];
     
