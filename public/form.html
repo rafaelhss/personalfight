@@ -1,0 +1,150 @@
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+        <script type="module" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js"></script>
+        <script nomodule="" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js"></script>
+        <style>
+            .trainning{
+              border-style: solid;
+              margin: 20px;
+            }
+            .move{
+              border-style: dotted;
+              background-color: aqua;
+            }
+            .newtrainning{
+                font-size:1300%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            #buttons{
+                width: 100%;
+                height: min-content;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                
+                border-style: dashed;
+            }
+            #leftbuttons{
+                float: left;
+                border-style: dotted;
+            }
+            #rightbuttons{
+                border-style: dotted;
+            }
+            .movebutton{
+                float: left;
+                border-style: groove;
+            }
+            .search-padder {
+                padding-right: 40px;
+                width: 100%;
+            }
+
+            .search {
+                width: 100%;
+                font-size: 100%;
+            }
+            body{
+                font-size: 300%;
+            }
+        </style>
+    </head>
+    <body ng-app="myApp" ng-controller="myCtrl">
+        <div class="container">
+          <div class="row">`
+            <h1>Trainnings</h1>
+            <div class="trainning" ng-repeat="trainning in trainnings" ng-hide="creating">
+                Trainning Drill: <ion-icon ng-click="clone(trainning)" name="copy-outline"></ion-icon>
+                 <div class="move" ng-repeat="move in trainning.drill track by $index">
+                    Part {{$index}}: {{move.moves}}
+                 </div>   
+            </div>
+            <div class="trainning" ng-show="creating" id="newtrainning">
+                 New Trainning Drill: 
+                 <div class="move">
+                    <div class="search-padder">
+                         <div class="move" ng-repeat="move in newtrainning.drill track by $index">
+                            Part {{$index}}: <textarea ng-model="newtrainning.drill[$index].moves" class="search" id="newtrainningtxt1" name="w3review" rows="4" cols="50">{{move.moves}}</textarea>
+                         </div>
+                    </div>
+                    <div ng-click="addPartNewTrainning()">
+                        <ion-icon name="add-outline"></ion-icon>Part
+                     </div>
+                 </div>   
+            </div>
+            
+            <div id="buttons" ng-show="creating">
+                <div id="leftbuttons">
+                    <div class="movebutton">sambinha</div>
+                    <div class="movebutton">de</div>
+                    <div class="movebutton">ja</div>
+                    <div class="movebutton">neirinho</div>
+                </div>
+                <div id="rightbuttons">
+                    de janeiro
+                </div>
+            </div>  
+            <div class="newtrainning" ng-click="newTrainning()" ng-hide="creating">
+                <ion-icon name="add-circle-outline"></ion-icon>
+            </div>
+            <div class="newtrainning" ng-click="saveNewTrainning()" ng-show="creating">
+                <ion-icon name="cloud-upload-outline"></ion-icon>
+            </div>
+              
+              
+              
+          </div>
+        </div>
+        <script>
+            var app = angular.module('myApp', []);
+            app.controller('myCtrl', function($scope, $http) {
+
+                $scope.creating = false;
+                $scope.newtrainning = {};
+                
+                $scope.newTrainning = function(){
+                    $scope.clone({"drill":[{"moves":""}]})
+                }
+                $scope.clone = function(trainning){
+                    $scope.creating = true;
+                    $scope.newtrainning = Object.assign({}, JSON.parse(JSON.stringify(trainning)));
+
+                }
+                
+                $scope.addPartNewTrainning = function(){
+                    var newMove = {"moves":""};
+                    $scope.newtrainning.drill.push(newMove);
+                }
+                
+                
+                $scope.saveNewTrainning = function() {
+                    console.log("saving: ")
+                        console.log($scope.trainnings)
+                    $scope.trainnings.push($scope.newtrainning);
+                    console.log("uploading: ")
+                                
+                        console.log($scope.trainnings)
+                   
+                    /*
+                    $http.post("/create", $scope.trainnings)
+                    .then(function(result){
+                        console.log(result.data)
+                        $scope.trainnings = result.data;
+                    }, function(error){
+                        console.log(error);
+                    });*/            
+                }
+                $http.get("/drills")
+                .then(function(result){
+                    console.log(result.data)
+                    $scope.trainnings = result.data;
+                }, function(error){
+                        console.log(error);
+                    });            
+            });
+        </script>
+    </body>
+</html>
