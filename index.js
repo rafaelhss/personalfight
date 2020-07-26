@@ -19,6 +19,7 @@ const app = express();
 app.use(express.static('public'));
 
 
+
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
@@ -43,7 +44,10 @@ const ChoseTrainningIntentHandler = {
     const type = handlerInput.requestEnvelope.request.intent.slots.type.value;
     const level = handlerInput.requestEnvelope.request.intent.slots.level.value;
       
-    const speechText = await choseTrainningIntent(level, type);
+    const deviceId = Alexa.getDeviceId(handlerInput.requestEnvelope);  
+    console.log("deviceId: " + deviceId)  
+      
+    const speechText = await choseTrainningIntent(handlerInput,level, type);
     console.log("speechText: " + speechText)  
     return handlerInput.responseBuilder
       .speak(speechText)
@@ -57,9 +61,9 @@ const NextDrillIntentHandler = {
     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
       && handlerInput.requestEnvelope.request.intent.name === 'NextDrillIntent';
   },
-  async handle(handlerInput) {
+  handle(handlerInput) {
     
-    const speechText =  await nextDrillIntentIntent();
+    const speechText =  nextDrillIntentIntent(handlerInput);
     return handlerInput.responseBuilder
       .speak(speechText)
       .withShouldEndSession(false)
@@ -73,9 +77,9 @@ const StartCurrentDrillHandler = {
     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
       && handlerInput.requestEnvelope.request.intent.name === 'StartCurrentDrillIntent';
   },
-  async handle(handlerInput) {
+  handle(handlerInput) {
     
-    const speechText =  await startCurrentDrillIntent();
+    const speechText = startCurrentDrillIntent(handlerInput);
     return handlerInput.responseBuilder
       .speak(speechText)
       .withShouldEndSession(false)
@@ -155,57 +159,53 @@ function saveSessionTrainning(currentTrainning){
 
 function speakDrills(currentTrainning, n) {
     var resp = "";
-    for(var i = 0; i <= n; i++){
-        resp += currentTrainning.trainning.drill[i].moves;
-        if(i < n){
-            resp += ". then ";  
-        }
+    
+    try {
+        for(var i = 0; i <= n; i++){
+            resp += currentTrainning.trainning.drill[i].moves;
+            if(i < n){
+                resp += ". then ";  
+            }
+        }    
+    } catch (err) {
+        console.log(err);
     }
+    
     return resp + ". ";
 }
 
-function nextDrillIntentIntent(){
-    return new Promise(((resolve, reject) => {
-        var resptxt = "";
-        var bucketParams = {
-            Bucket : bucketName,
-            Key: currentTrainningName
-        };
-        s3.getObject(bucketParams, function(err, data) {
-            if (err) {
-                console.log(err, err.stack); // an error occurred
-                reject(err);
-            } else {
-                var currentTrainning = JSON.parse(data.Body.toString('utf-8'));
-                currentTrainning.currentdrill += 1;
-                saveSessionTrainning(currentTrainning);
+function nextDrillIntentIntent(handlerInput){
+    var resptxt = "";
 
-                if(currentTrainning.currentdrill >= currentTrainning.trainning.drill.length){
-                    resptxt = "<speak> Congratulations! Trainning session is over. you are done! </speak>";
-                } else {
-                    resptxt = "<speak> Ok! Part " + (currentTrainning.currentdrill + 1) + ". Lets add more moves to that drill. In the end of the drill add: "
-                    + currentTrainning.trainning.drill[currentTrainning.currentdrill].moves
-                    + " <break time=\"1s\"/>"
-                    + ". So, the full drill now is: ";
+    var sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    var currentTrainning = sessionAttributes.currentTrainning;
+    currentTrainning.currentdrill += 1;
+    sessionAttributes.currentTrainning = currentTrainning;
+    handlerInput.attributesManager.setSessionAttributes(sessionAttributes)
 
-                    resptxt += speakDrills(currentTrainning, currentTrainning.currentdrill);
+    if(currentTrainning.currentdrill >= currentTrainning.trainning.drill.length){
+        resptxt = "<speak> Congratulations! Trainning session is over. you are done! </speak>";
+    } else {
+        resptxt = "<speak> Ok! Part " + (currentTrainning.currentdrill + 1) + ". Lets add more moves to that drill. In the end of the drill add: "
+        + currentTrainning.trainning.drill[currentTrainning.currentdrill].moves
+        + " <break time=\"1s\"/>"
+        + ". So, the full drill now is: ";
 
-                    resptxt += " <break time=\"1s\"/>"
-                    + ". I will say it one more time: "
+        resptxt += speakDrills(currentTrainning, currentTrainning.currentdrill);
 
-                    resptxt += speakDrills(currentTrainning, currentTrainning.currentdrill);
+        resptxt += " <break time=\"1s\"/>"
+        + ". I will say it one more time: "
 
-                    resptxt += " Tell me if you are ready. </speak>"
-                } 
-            }
-            console.log(resptxt);
-            resolve(resptxt);
-        });
-    }));
+        resptxt += speakDrills(currentTrainning, currentTrainning.currentdrill);
+
+        resptxt += " Tell me if you are ready. </speak>"
+    } 
+    console.log(resptxt);
+    return resptxt;
 }
 
 
-function choseTrainningIntent(level, type){
+function choseTrainningIntent(handlerInput, level, type){
     
     function checkLevel(trainning, level){
         var count = 0;
@@ -268,7 +268,10 @@ function choseTrainningIntent(level, type){
                 currentTrainning.type = type;
                 
 
-                saveSessionTrainning(currentTrainning);
+                var sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+                sessionAttributes.currentTrainning = currentTrainning;
+                handlerInput.attributesManager.setSessionAttributes(sessionAttributes)
+
 
                 console.log(currentTrainning);
 
@@ -337,41 +340,28 @@ function waitForUserNoMusic(minutes, drilltxt){
 }
 
 
-function startCurrentDrillIntent(){
-    var resptxt = "";
-    return new Promise(((resolve, reject) => {
-        var bucketParams = {
-            Bucket : bucketName,
-            Key: currentTrainningName
-        };
-        s3.getObject(bucketParams, function(err, data) {
-            if (err) {
-                console.log(err, err.stack); // an error occurred
-                reject(err);
-            } else {
-                var currentTrainning = JSON.parse(data.Body.toString('utf-8'));
-                var minutes = 3;
-                
-                resptxt = "<speak> Ok! Part " + (currentTrainning.currentdrill + 1) + ". " + minutes + " minutes. "; 
-                
-                resptxt += speakDrills(currentTrainning, currentTrainning.currentdrill);
-                
-                resptxt += " <break time=\"1s\"/> 3, " 
-                                                        + " <break time=\"1s\"/> 2, " 
-                                                        + " <break time=\"1s\"/> 1, GO! ";   
+function startCurrentDrillIntent(handlerInput){
+    var resptxt = "";    
+    var sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    var currentTrainning = sessionAttributes.currentTrainning;
+    var minutes = 3;
 
-                
-                resptxt += waitForUserMusic(minutes, speakDrills(currentTrainning, currentTrainning.currentdrill));
+    resptxt = "<speak> Ok! Part " + (currentTrainning.currentdrill + 1) + ". " + minutes + " minutes. "; 
 
-                
-                resptxt += " Ok, Stop! Good job! Take a breath! When you are ready, ask for next drill."
-                resptxt += " </speak>";
-                resolve(resptxt);
-            }
-        });
-    }));
-    
-    
+    resptxt += speakDrills(currentTrainning, currentTrainning.currentdrill);
+
+    resptxt += " <break time=\"1s\"/> 3, " 
+                                            + " <break time=\"1s\"/> 2, " 
+                                            + " <break time=\"1s\"/> 1, GO! ";   
+
+
+    resptxt += waitForUserMusic(minutes, speakDrills(currentTrainning, currentTrainning.currentdrill));
+
+
+    resptxt += " Ok, Stop! Good job! Take a breath! When you are ready, ask for next drill."
+    resptxt += " </speak>";
+    return resptxt;
+
 }
 
 
