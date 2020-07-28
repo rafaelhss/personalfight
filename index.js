@@ -1,5 +1,11 @@
+String.prototype.replaceAll = String.prototype.replaceAll || function(needle, replacement) {
+    return this.split(needle).join(replacement);
+};
+
 const currentTrainningName = 'currentTrainning';
 const bucketName = 'mydrills';
+
+const msg = require('./texts');
 
 
 var AWS = require('aws-sdk');
@@ -19,13 +25,19 @@ const app = express();
 app.use(express.static('public'));
 
 
+var lang = "en";
+const LanguageInterceptor = {
+	async process(handlerInput) {
+		lang = handlerInput.requestEnvelope.request.locale.substring(0,2); 
+    }
+};
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
   },
   handle(handlerInput) {
-    const speechText = "<speak>Welcome to Personal Fight. We have easy, normal and hard boxing and kickboxin trainings. What do you want to train?</speak>";
+    const speechText = "<speak>" + msg.welcomemsg[lang] + "</speak>";
 
     return handlerInput.responseBuilder
       .speak(speechText)
@@ -62,11 +74,11 @@ const NextDrillIntentHandler = {
       && handlerInput.requestEnvelope.request.intent.name === 'NextDrillIntent';
   },
   handle(handlerInput) {
-    
-    const speechText =  nextDrillIntentIntent(handlerInput);
+    var ShouldEndSession = false;
+    const speechText =  nextDrillIntentIntent(handlerInput, ShouldEndSession);
     return handlerInput.responseBuilder
       .speak(speechText)
-      .withShouldEndSession(false)
+      .withShouldEndSession(ShouldEndSession)
       .getResponse();
   }
 };
@@ -95,7 +107,7 @@ const HelpIntentHandler = {
       && handlerInput.requestEnvelope.request.intent.name === 'AMAZON.HelpIntent';
   },
   handle(handlerInput) {
-    const speechText = 'Chose a type and level of training. for example: I want to train boxing hard.';
+    const speechText = msg.helpmsg[lang];
 
     return handlerInput.responseBuilder
       .speak(speechText)
@@ -111,7 +123,7 @@ const CancelAndStopIntentHandler = {
         || handlerInput.requestEnvelope.request.intent.name === 'AMAZON.StopIntent');
   },
   handle(handlerInput) {
-    const speechText = 'Goodbye!';
+    const speechText = msg.byemsg[lang];
 
     return handlerInput.responseBuilder
       .speak(speechText)
@@ -136,10 +148,10 @@ const ErrorHandler = {
   },
   handle(handlerInput, error) {
     console.log(`Error handled: ${error.message}`);
-
+    
     return handlerInput.responseBuilder
-      .speak('Sorry, I can\'t understand the command. Please say again.')
-      .reprompt('Sorry, I can\'t understand the command. Please say again.')
+      .speak(msg.errormsg[lang])
+      .reprompt(msg.errormsg[lang])
       .getResponse();
   },
 };
@@ -162,9 +174,9 @@ function speakDrills(currentTrainning, n) {
     
     try {
         for(var i = 0; i <= n; i++){
-            resp += currentTrainning.trainning.drill[i].moves;
+            resp += currentTrainning.trainning[i];
             if(i < n){
-                resp += ". then ";  
+                resp += ". "+ msg.thenmsg[lang] +" ";  
             }
         }    
     } catch (err) {
@@ -174,7 +186,8 @@ function speakDrills(currentTrainning, n) {
     return resp + ". ";
 }
 
-function nextDrillIntentIntent(handlerInput){
+function nextDrillIntentIntent(handlerInput, shouldendsession){
+    shouldendsession = false;
     var resptxt = "";
 
     var sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
@@ -183,34 +196,47 @@ function nextDrillIntentIntent(handlerInput){
     sessionAttributes.currentTrainning = currentTrainning;
     handlerInput.attributesManager.setSessionAttributes(sessionAttributes)
 
-    if(currentTrainning.currentdrill >= currentTrainning.trainning.drill.length){
-        resptxt = "<speak> Congratulations! Trainning session is over. you are done! </speak>";
+    if(currentTrainning.currentdrill >= currentTrainning.trainning.length){
+        resptxt = "<speak> " + msg.endmsg[lang] + "</speak>";
+        shouldendsession = true;
     } else {
-        resptxt = "<speak> Ok! Part " + (currentTrainning.currentdrill + 1) + ". Lets add more moves to that drill. In the end of the drill add: "
-        + currentTrainning.trainning.drill[currentTrainning.currentdrill].moves
-        + " <break time=\"1s\"/>"
-        + ". So, the full drill now is: ";
-
-        resptxt += speakDrills(currentTrainning, currentTrainning.currentdrill);
-
-        resptxt += " <break time=\"1s\"/>"
-        + ". I will say it one more time: "
-
-        resptxt += speakDrills(currentTrainning, currentTrainning.currentdrill);
-
-        resptxt += " Tell me if you are ready. </speak>"
+        resptxt = "<speak> " + msg.nextDrillmsg[lang] + "</speak>";
+        resptxt = resptxt.replaceAll("@@PART@@", (currentTrainning.currentdrill + 1));
+        resptxt = resptxt.replaceAll("@@MOVES@@", currentTrainning.trainning[currentTrainning.currentdrill]);
+        resptxt = resptxt.replaceAll("@@FULL@@", speakDrills(currentTrainning, currentTrainning.currentdrill));
     } 
     console.log(resptxt);
     return resptxt;
 }
 
 
+
+
+
 function choseTrainningIntent(handlerInput, level, type){
+
+    function mapCodesToMoves(trainings, lang){
+        var mappedtrainning = [];
+        trainings.forEach(function(t){
+            var trainning = {};
+            trainning = [];
+            t.forEach(function(m){
+                var moves = [];
+                m.forEach(function(d){
+                    moves.push(msg.moves[lang][d]);
+                })
+                trainning.push(moves);
+            });
+            mappedtrainning.push(trainning);
+        });  
+        return mappedtrainning;
+    }
+    
     
     function checkLevel(trainning, level){
         var count = 0;
-        trainning.drill.forEach(function(item){
-            count += item.moves.split(",").length;
+        trainning.forEach(function(item){
+            count += item.length;
         })
 
         var mylevel = "";
@@ -227,8 +253,8 @@ function choseTrainningIntent(handlerInput, level, type){
 
     function checkType(trainning, type){
         var mytype = "boxing";
-        trainning.drill.forEach(function(item){
-            if(item.moves.indexOf("kick") > 0){
+        trainning.forEach(function(item){
+            if(item.indexOf("kick") > 0){
                 mytype = "kickboxing";   
             }
         })
@@ -248,14 +274,20 @@ function choseTrainningIntent(handlerInput, level, type){
                 console.log(err, err.stack); // an error occurred
                 reject(err);
             } else {
-                var trainnings = JSON.parse(data.Body.toString('utf-8'));           // successful response
-                console.log(data.Body.toString('utf-8'));
+                console.log(JSON.parse(data.Body.toString('utf-8')))
+                
+                
+                var trainnings = mapCodesToMoves(JSON.parse(data.Body.toString('utf-8')), lang);           // successful response
+                console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@xxxxxxxxxxxxxxxxxxxxx@@@@@@@@@@@@@@@@@@@@@@@@");
+                console.log(trainnings);
+                
                 var filteredtrainnings = trainnings.filter(function(trainning){
                     return checkLevel(trainning, level) && checkType(trainning, type)
                 });
+                
                 console.log(filteredtrainnings);
                 
-                if(filteredtrainnings.length <= 0){ //enquanto nao enche a bas
+                if(filteredtrainnings.length <= 0){ //enquanto nao enche a base
                     filteredtrainnings = trainnings; 
                 }
 
@@ -272,19 +304,10 @@ function choseTrainningIntent(handlerInput, level, type){
                 sessionAttributes.currentTrainning = currentTrainning;
                 handlerInput.attributesManager.setSessionAttributes(sessionAttributes)
 
-
-                console.log(currentTrainning);
-
-                console.log(currentTrainning.trainning.drill[0].moves);
-                resptxt = "<speak> All right! lets start. Full drill will be: "; 
-
-                    resptxt += speakDrills(currentTrainning, currentTrainning.trainning.drill.length-1);
-                    resptxt += " <break time=\"1s\"/>"
-                    + " Lets begin with the first drill: "
-                    + currentTrainning.trainning.drill[0].moves 
-                    + " <break time=\"2s\"/> again: "
-                    + currentTrainning.trainning.drill[0].moves 
-                    + ". Tell me if you are ready. </speak>";
+                console.log(currentTrainning.trainning[0]);
+                resptxt = "<speak>" + msg.chooseDrillmsg[lang] + "</speak>"; 
+                resptxt = resptxt.replaceAll("@@FULL@@", speakDrills(currentTrainning, currentTrainning.trainning.length-1));
+                resptxt = resptxt.replaceAll("@@MOVES@@", currentTrainning.trainning[0]);
                 resolve(resptxt);
             }
         });
@@ -295,15 +318,18 @@ function waitForUserMusic(minutes, drilltxt){
     var resptxt = "";
     //var breaktxt = " <break time=\"10s\"/> ";
     var breakaudio1min = " <audio src=\"https://personalfight.herokuapp.com/audio2.mp3\"/>  ";
+    //var breakaudio1min = " entrei na feira da fruta  ";
     
-    var motivational = [" Go!Go!Go! ", " Keep going. ", " Don't stop! ", " Focus!Focus!Focus! ", " Go champ! "];
+    var motivational = msg.motivationalmsg[lang];
     
     for(var i = 1; i <= minutes; i++){
-        resptxt += motivational[Math.floor(Math.random() * motivational.length)];
-        resptxt += drilltxt;
-        resptxt += breakaudio1min;
-        if ((minutes - i) > 0) {
-            resptxt += (minutes - i) + " minutes left!";
+        resptxt += " " + motivational[Math.floor(Math.random() * motivational.length)];
+        resptxt += " " + drilltxt;
+        resptxt += " " + breakaudio1min;
+        if ((minutes - i) > 1) {
+            resptxt += (minutes - i) + " " + msg.minutesleftmsg[lang];
+        } else if ((minutes - i) > 0) {
+            resptxt += (minutes - i) + " " + msg.minuteleftmsg[lang];
         }
     }
     return resptxt;
@@ -311,7 +337,7 @@ function waitForUserMusic(minutes, drilltxt){
 
 
 
-
+//deprecated
 function waitForUserNoMusic(minutes, drilltxt){
     var resptxt = "";
     var breaktxt = " <break time=\"10s\"/> ";
@@ -346,19 +372,19 @@ function startCurrentDrillIntent(handlerInput){
     var currentTrainning = sessionAttributes.currentTrainning;
     var minutes = 3;
 
-    resptxt = "<speak> Ok! Part " + (currentTrainning.currentdrill + 1) + ". " + minutes + " minutes. "; 
-
-    resptxt += speakDrills(currentTrainning, currentTrainning.currentdrill);
-
-    resptxt += " <break time=\"1s\"/> 3, " 
-                                            + " <break time=\"1s\"/> 2, " 
-                                            + " <break time=\"1s\"/> 1, GO! ";   
-
+    resptxt = "<speak>" + msg.startDrillmsg[lang];
+    resptxt = resptxt.replaceAll("@@PART@@", (currentTrainning.currentdrill + 1));
+    resptxt = resptxt.replaceAll("@@MIN@@", minutes);
+    resptxt = resptxt.replaceAll("@@MOVES@@", speakDrills(currentTrainning, currentTrainning.currentdrill));
 
     resptxt += waitForUserMusic(minutes, speakDrills(currentTrainning, currentTrainning.currentdrill));
 
-
-    resptxt += " Ok, Stop! Good job! Take a breath! When you are ready, ask for next drill."
+    
+    if((currentTrainning.currentdrill + 1) >= currentTrainning.trainning.length){
+        resptxt += msg.endAllDrillmsg[lang];
+    } else {
+        resptxt += msg.endDrillmsg[lang];    
+    }
     resptxt += " </speak>";
     return resptxt;
 
@@ -378,6 +404,9 @@ exports.handler = Alexa.SkillBuilders.custom()
     HelpIntentHandler,
     CancelAndStopIntentHandler,
     SessionEndedRequestHandler)
+    .addRequestInterceptors(
+	    LanguageInterceptor
+    )
   .addErrorHandlers(ErrorHandler)
   .create();
 
