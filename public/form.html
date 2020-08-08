@@ -100,8 +100,9 @@
                     <div class="partnumber">{{$index + 1}}</div>
                     <div class="partmoves"><span ng-click="deleteMove($index, $parent.$index)" class="movebutton" ng-repeat="move in part track by $index">{{ptname[move]}},&nbsp;</span></div>
                 </div>
-                <div class="newpart"  ng-click="addPartNewTrainning()">
-                    <ion-icon name="add-circle-outline"></ion-icon>Part
+                <div class="newpart"  >
+                    <ion-icon ng-click="addPartNewTrainning()" name="add-circle-outline"></ion-icon>Part
+                    <ion-icon ng-click="removePartNewTrainning()" name="remove-circle-outline"></ion-icon> Part
                 </div>
             </div>
             
@@ -172,6 +173,9 @@
                     $scope.newtrainning.push(newMove);
                 }
                 
+                $scope.removePartNewTrainning = function(){
+                    $scope.newtrainning.pop();
+                }
                 
                 
                 $scope.saveNewTrainning = function() {
