@@ -179,8 +179,10 @@
                 }
                 
                 function saveTrainnings(newTrainning){
-                    var pwd = prompt("escreva a senha", "teste123");
+                    
+                    var pwd = prompt("escreva a senha", localStorage.getItem('pwd'));
                     if (pwd != null && pwd != "") {
+                        localStorage.setItem('pwd', pwd);
                         if(newTrainning) {
                             $scope.trainnings.push(newTrainning);
                         }
