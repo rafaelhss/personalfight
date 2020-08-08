@@ -133,7 +133,7 @@
                 
                 $scope.deleteTraining = function(index){
                     var txt = "" 
-                    if (confirm("Deseja deletar " + index)) {
+                    if (confirm("Deseja deletar " + (index +1)) {
                        $scope.trainnings.splice(index,1);
                        saveTrainnings();
                     } 
