@@ -2,6 +2,8 @@ String.prototype.replaceAll = String.prototype.replaceAll || function(needle, re
     return this.split(needle).join(replacement);
 };
 
+require('ssl-root-cas');
+
 const currentTrainningName = 'currentTrainning';
 const bucketName = 'mydrills';
 
@@ -19,6 +21,7 @@ const express = require('express');
 
 const { ExpressAdapter } = require('ask-sdk-express-adapter');
 const Alexa = require('ask-sdk-core');
+const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
 
 const app = express();
 
@@ -27,10 +30,48 @@ app.use(express.static('public'));
 
 var lang = "en";
 const LanguageInterceptor = {
-	async process(handlerInput) {
-		lang = handlerInput.requestEnvelope.request.locale.substring(0,2); 
+    process(handlerInput) {
+        try{
+            console.log("Interecpt: ")
+            console.log("Interecpt: " + handlerInput.requestEnvelope.request.locale)
+            lang = handlerInput.requestEnvelope.request.locale.substring(0,2);
+            console.log("lang : " + lang);
+            console.log("handlerInput.requestEnvelope.request.type: " + handlerInput.requestEnvelope.request.type)
+            if(handlerInput.requestEnvelope.request.intent) {
+                console.log("handlerInput.requestEnvelope.request.intent.name: " + handlerInput.requestEnvelope.request.intent.name)    
+            }
+            
+        } catch (error) {
+            console.log("error:")
+            console.log(error)
+        }
     }
 };
+
+
+const LoadUnfinishedTrainningInterceptor = {
+    async process(handlerInput) {
+        
+        var sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        var currentTrainning = sessionAttributes.currentTrainning;
+    
+        if(!currentTrainning) {
+            const attributesManager = handlerInput.attributesManager;
+            const sessionAttributes = await attributesManager.getPersistentAttributes() || {};
+
+            currentTrainning = sessionAttributes.hasOwnProperty('currentTrainning') ? sessionAttributes.currentTrainning : 0;
+
+            console.log("LoadUnfinishedTrainningInterceptor:")
+            console.log(currentTrainning)
+
+            if (currentTrainning) {
+                attributesManager.setSessionAttributes(sessionAttributes);
+            }    
+        }
+        
+    }
+};
+
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
@@ -58,8 +99,16 @@ const ChoseTrainningIntentHandler = {
       
     const deviceId = Alexa.getDeviceId(handlerInput.requestEnvelope);  
     console.log("deviceId: " + deviceId)  
+    
+    var sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    var currentTrainning = sessionAttributes.currentTrainning;
+    
+   // if(currentTrainning) {
+//        const speechText = nextDrillIntentIntent(handlerInput, ShouldEndSession);
+  //  } else {
+        const speechText = await choseTrainningIntent(handlerInput,level, type);
+//    }
       
-    const speechText = await choseTrainningIntent(handlerInput,level, type);
     console.log("speechText: " + speechText)  
     return handlerInput.responseBuilder
       .speak(speechText)
@@ -122,7 +171,17 @@ const CancelAndStopIntentHandler = {
       && (handlerInput.requestEnvelope.request.intent.name === 'AMAZON.CancelIntent'
         || handlerInput.requestEnvelope.request.intent.name === 'AMAZON.StopIntent');
   },
-  handle(handlerInput) {
+  async handle(handlerInput) {
+      
+    const attributesManager = handlerInput.attributesManager;
+    
+    var sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    var unfinishedTrainning = {"currentTrainning":sessionAttributes.currentTrainning};  
+    
+    attributesManager.setPersistentAttributes(unfinishedTrainning); 
+    await attributesManager.savePersistentAttributes();  
+      
+      
     const speechText = msg.byemsg[lang];
 
     return handlerInput.responseBuilder
@@ -136,9 +195,22 @@ const SessionEndedRequestHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'SessionEndedRequest';
   },
-  handle(handlerInput) {
+  async handle(handlerInput) {
     //any cleanup logic goes here
-    return handlerInput.responseBuilder.getResponse();
+    const attributesManager = handlerInput.attributesManager;
+      
+    var sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    var unfinishedTrainning = {"currentTrainning":sessionAttributes.currentTrainning};  
+    
+    attributesManager.setPersistentAttributes(unfinishedTrainning); 
+    await attributesManager.savePersistentAttributes();
+      
+    const speechText = msg.byemsg[lang];
+
+    return handlerInput.responseBuilder
+      .speak(speechText)
+      .withShouldEndSession(true)
+      .getResponse();
   }
 };
 
@@ -318,7 +390,7 @@ function waitForUserMusic(minutes, drilltxt){
     var resptxt = "";
     //var breaktxt = " <break time=\"10s\"/> ";
     var breakaudio1min = " <audio src=\"https://personalfight.herokuapp.com/audio2.mp3\"/>  ";
-    //var breakaudio1min = " entrei na feira da fruta  ";
+    //var breakaudio1min = " entrei na feira da fruta a a a a  ";
     
     var motivational = msg.motivationalmsg[lang];
     
@@ -396,6 +468,9 @@ const skillBuilder = Alexa.SkillBuilders.custom();
 const skill = skillBuilder.create();
 
 exports.handler = Alexa.SkillBuilders.custom()
+  .withPersistenceAdapter(
+        new persistenceAdapter.S3PersistenceAdapter({bucketName:"mydrills"})
+   )
   .addRequestHandlers(
     LaunchRequestHandler,
     ChoseTrainningIntentHandler,
@@ -405,7 +480,8 @@ exports.handler = Alexa.SkillBuilders.custom()
     CancelAndStopIntentHandler,
     SessionEndedRequestHandler)
     .addRequestInterceptors(
-	    LanguageInterceptor
+	    LanguageInterceptor,
+        LoadUnfinishedTrainningInterceptor
     )
   .addErrorHandlers(ErrorHandler)
   .create();
