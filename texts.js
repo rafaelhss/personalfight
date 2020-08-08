@@ -1,7 +1,7 @@
 module.exports = {
     moves:{
         "pt": ["jab", "direto", "cruzado de esquerda", "cruzado de direita", "upper de esquerda", "upper de direita", "uqui de esquerda", "uqui de direita", "jab na cintura", "direto na cintura", "cotovelo esquerdo", "cotovelo direito", "chute baixo de direita", "chute baixo de esquerda", "chute medio de direita", "chute medio de esquerda", "chute alto de direita", "chute alto de esquerda", "frontal de direita", "frontal de esquerda", "joelhada de direita", "joelhada de esquerda", "joelhada voadora de direita", "joelhada voadora de esquerda", "rodado pra direita", "rodado pra esquerda", "esquiva"],
-        "en": ["jab", "cross", "left hook", "right hook", "left uppercut", "right uppercut", "left uhk", "right uhk", "jab low level", "cross low level", "left elbow", "right elbow", "right lowkick", "left lowkick", "right kick", "left kick", "right highkick", "left highkick", "right front kick", "left front kick", "right knee", "left knee", "right flying knee", "left flying knee", "right round kick", "left round kick"]
+        "en": ["jab", "cross", "left hook", "right hook", "left uppercut", "right uppercut", "left uhk", "right uhk", "jab low level", "cross low level", "left elbow", "right elbow", "right lowkick", "left lowkick", "right kick", "left kick", "right highkick", "left highkick", "right front kick", "left front kick", "right knee", "left knee", "right flying knee", "left flying knee", "right round kick", "left round kick", "dodge"]
     },
     welcomemsg: {
         "pt": "Bem vindo ao Personal Fight! Temos treinos fáceis, normais e pesados de boxe e kick boxe. O que voce quer treinar hoje?",
