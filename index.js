@@ -512,19 +512,25 @@ app.use(bodyParser.json()) // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 
 app.post('/create', function(req, res){
-    
-    var uploadParams = {Bucket: 'mydrills', Key: 'drills', Body: JSON.stringify(req.body)};
+    var pwd = req.query.pwd;
+    console.log("pwd: " + pwd)
+    if(pwd == app.get('pwd')){
+        var uploadParams = {Bucket: 'mydrills', Key: 'drills', Body: JSON.stringify(req.body)};
 
-    console.log("uploaing: " + JSON.stringify(req.body))
-    // call S3 to retrieve upload file to specified bucket
-    s3.upload (uploadParams, function (err, data) {
-        if (err) {
-            console.log("Error", err);
-        } if (data) {
-            console.log("Upload Success", data.Location);
-            res.send("save ok")
-        }
-    });
+        console.log("uploaing: " + JSON.stringify(req.body))
+        // call S3 to retrieve upload file to specified bucket
+        s3.upload (uploadParams, function (err, data) {
+            if (err) {
+                console.log("Error", err);
+            } if (data) {
+                console.log("Upload Success", data.Location);
+                res.send("save ok")
+            }
+        });    
+    } else {
+        console.log("Aint doing shit.")
+    }
+    
     
 })
 //fim cod para adm
@@ -532,6 +538,8 @@ app.post('/create', function(req, res){
     
     
 app.set('port', (process.env.PORT || 5000));
+
+app.set('pwd', (process.env.UPDATEPWD || "teste123"));
 
 
 app.listen(app.get('port'), function () {

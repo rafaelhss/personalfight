@@ -1,42 +1,64 @@
 <html>
     <head>
+        <script src="names.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
         <script type="module" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js"></script>
         <script nomodule="" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js"></script>
         <style>
             .trainning{
-              border-style: solid;
+              box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
               margin: 20px;
+              margin-top: 60px;
+              overflow: auto;
+              background-color: #a1c5e6;
             }
-            .move{
-              border-style: dotted;
-              background-color: aqua;
+            .part{
+                overflow: auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 10px;
+            }
+            .part:nth-child(even) {background: #DDD}
+            .part:nth-child(odd) {background: #EEE}
+            .partnumber{
+                font-size: 200%;
+                width: 20%;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+            }
+            .partmoves{
+                width: 80%;
+            }
+            
+           .selected{
+              font-weight: bold;
+               border-style: dashed;
             }
             .newtrainning{
-                font-size:1300%;
+                font-size:400%;
                 display: flex;
                 justify-content: center;
                 align-items: center;
             }
-            #buttons{
-                width: 100%;
-                height: min-content;
+            .newpart{
+                font-size:200%;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                
-                border-style: dashed;
             }
-            #leftbuttons{
-                float: left;
-                border-style: dotted;
-            }
-            #rightbuttons{
-                border-style: dotted;
-            }
+
             .movebutton{
-                float: left;
+                display: inline-block;
+                position: relative;
+                
                 border-style: groove;
+                background-color: #a1c5e6;
+                padding: 5px 5px;
+                text-align: center;
+                text-decoration: none;
+                margin: 5px;
             }
             .search-padder {
                 padding-right: 40px;
@@ -49,49 +71,52 @@
             }
             body{
                 font-size: 300%;
+                background-color: #e6f3ff;
+            }
+            .delete{
+                position: absolute;
+                top: 40%;
+                background-color: red;
             }
         </style>
     </head>
     <body ng-app="myApp" ng-controller="myCtrl">
-        <div class="container">
-          <div class="row">`
-            <h1>Trainnings</h1>
-            <div class="trainning" ng-repeat="trainning in trainnings" ng-hide="creating">
-                Trainning Drill: <ion-icon ng-click="clone(trainning)" name="copy-outline"></ion-icon>
-                 <div class="move" ng-repeat="move in trainning.drill track by $index">
-                    Part {{$index}}: {{move.moves}}
+        <div class="container"> 
+          <div class="row">
+            <h1>Treinos Casca Grossa</h1>
+            <div class="trainning" ng-repeat="trainning in trainnings track by $index" ng-hide="creating">
+                <h2>Treino {{$index +1}} 
+                    <ion-icon ng-click="clone(trainning)" name="copy-outline"></ion-icon>
+                    <ion-icon ng-click="deleteTraining($index)" name="trash-outline"></ion-icon>
+                </h2>
+                 <div class="part" ng-repeat="part in trainning track by $index">
+                    <div class="partnumber">{{$index + 1}}</div>
+                     <div class="partmoves"><span ng-repeat="move in part track by $index">{{ptname[move]}},&nbsp;</span></div>
                  </div>   
             </div>
             <div class="trainning" ng-show="creating" id="newtrainning">
-                 New Trainning Drill: 
-                 <div class="move">
-                    <div class="search-padder">
-                         <div class="move" ng-repeat="move in newtrainning.drill track by $index">
-                            Part {{$index}}: <textarea ng-model="newtrainning.drill[$index].moves" class="search" id="newtrainningtxt1" name="w3review" rows="4" cols="50">{{move.moves}}</textarea>
-                         </div>
-                    </div>
-                    <div ng-click="addPartNewTrainning()">
-                        <ion-icon name="add-outline"></ion-icon>Part
-                     </div>
-                 </div>   
+                 <h2>Novo treino: </h2>
+                <div class="part" ng-class="selected == $index ? 'selected' : ''" ng-repeat="part in newtrainning track by $index" ng-click="selectPart($index)">
+                    <div class="partnumber">{{$index + 1}}</div>
+                    <div class="partmoves"><span ng-click="deleteMove($index, $parent.$index)" class="movebutton" ng-repeat="move in part track by $index">{{ptname[move]}},&nbsp;</span></div>
+                </div>
+                <div class="newpart"  ng-click="addPartNewTrainning()">
+                    <ion-icon name="add-circle-outline"></ion-icon>Part
+                </div>
             </div>
             
             <div id="buttons" ng-show="creating">
-                <div id="leftbuttons">
-                    <div class="movebutton">sambinha</div>
-                    <div class="movebutton">de</div>
-                    <div class="movebutton">ja</div>
-                    <div class="movebutton">neirinho</div>
-                </div>
-                <div id="rightbuttons">
-                    de janeiro
-                </div>
+                <div class="movebutton" ng-repeat="move in ptname track by $index" ng-click="addMove($index, selected)">{{move}}</div>
             </div>  
-            <div class="newtrainning" ng-click="newTrainning()" ng-hide="creating">
+            <div class="newtrainning" ng-click="createNewTrainning()" ng-hide="creating">
                 <ion-icon name="add-circle-outline"></ion-icon>
             </div>
-            <div class="newtrainning" ng-click="saveNewTrainning()" ng-show="creating">
-                <ion-icon name="cloud-upload-outline"></ion-icon>
+            <div class="newtrainning"  ng-show="creating && !uploading">
+                <ion-icon ng-click="saveNewTrainning()" name="cloud-upload-outline"></ion-icon>
+                <ion-icon ng-click="creating = false" name="arrow-undo-outline"></ion-icon>
+            </div>
+            <div class="newtrainning"  ng-show="uploading">
+               <ion-icon name="hourglass-outline"></ion-icon>
             </div>
               
               
@@ -102,41 +127,79 @@
             var app = angular.module('myApp', []);
             app.controller('myCtrl', function($scope, $http) {
 
+                $scope.ptname = ptname;
                 $scope.creating = false;
-                $scope.newtrainning = {};
+               
                 
-                $scope.newTrainning = function(){
-                    $scope.clone({"drill":[{"moves":""}]})
+                $scope.deleteTraining = function(index){
+                    var txt = "" 
+                    if (confirm("Deseja deletar " + index)) {
+                       $scope.trainnings.splice(index,1);
+                       saveTrainnings();
+                    } 
+                }
+                
+                
+                $scope.addMove = function(move, selectedpart){
+                    console.log("Adding: " + move + " on " + selectedpart)
+                    $scope.newtrainning[selectedpart].push(move)
+                }
+                
+                
+                $scope.selected = 0;
+                $scope.selectPart = function(part){
+                    console.log("select: " + part) 
+                    $scope.selected = part;
+                }
+                $scope.deleteMove = function(move, selectedpart){
+                    console.log("delete " + move + " from " + selectedpart)
+                    $scope.newtrainning[selectedpart].splice(move,1)
+                }
+                
+                $scope.createNewTrainning = function(){
+                    $scope.clone([[]]);
                 }
                 $scope.clone = function(trainning){
                     $scope.creating = true;
-                    $scope.newtrainning = Object.assign({}, JSON.parse(JSON.stringify(trainning)));
+                    $scope.newtrainning = Object.assign([], JSON.parse(JSON.stringify(trainning)));
 
                 }
                 
                 $scope.addPartNewTrainning = function(){
-                    var newMove = {"moves":""};
-                    $scope.newtrainning.drill.push(newMove);
+                    var newMove = [];
+                    console.log("$scope.newtrainning")
+                    console.log($scope.newtrainning)
+                    $scope.newtrainning.push(newMove);
                 }
+                
                 
                 
                 $scope.saveNewTrainning = function() {
-                    console.log("saving: ")
-                        console.log($scope.trainnings)
-                    $scope.trainnings.push($scope.newtrainning);
-                    console.log("uploading: ")
-                                
-                        console.log($scope.trainnings)
-                   
-                    /*
-                    $http.post("/create", $scope.trainnings)
-                    .then(function(result){
-                        console.log(result.data)
-                        $scope.trainnings = result.data;
-                    }, function(error){
-                        console.log(error);
-                    });*/            
+                    saveTrainnings($scope.newtrainning) 
                 }
+                
+                function saveTrainnings(newTrainning){
+                    var pwd = prompt("escreva a senha", "teste123");
+                    if (pwd != null && pwd != "") {
+                        if(newTrainning) {
+                            $scope.trainnings.push(newTrainning);
+                        }
+                        $scope.uploading = true;
+                        $http.post("/create?pwd=" + pwd, $scope.trainnings)
+                        .then(function(result){
+                            console.log(result.data)
+                            $scope.uploading = false;
+                            $scope.creating = false;
+                            //$scope.trainnings = result.data;
+                        }, function(error){
+                            console.log(error);
+                            $scope.uploading = false;
+                            alert(error)
+                        });            
+                    }
+                }
+                
+                    
                 $http.get("/drills")
                 .then(function(result){
                     console.log(result.data)
