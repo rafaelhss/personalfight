@@ -78,16 +78,36 @@
                 top: 40%;
                 background-color: red;
             }
+           #amazon {
+                max-width: 100%;
+                max-height: 100vh;
+                margin: auto;
+            }
+            #logo{
+                width:100%;
+                background-color: white;
+                display: grid;
+                justify-content: center;
+                align-items: center;
+            }
+            * {
+                margin: 0;
+                padding: 0;
+            }
         </style>
     </head>
     <body ng-app="myApp" ng-controller="myCtrl">
         <div class="container"> 
           <div class="row">
-            <h1>Treinos Casca Grossa</h1>
+            <div id="logo" class="trainning">
+                <a href="https://www.amazon.com.br/rafael-Casca-Grossa/dp/B08DMYGHS1/" target="_blank">
+                    <img id="amazon" src="amazon.png">
+                </a>
+              </div>
             <div class="trainning" ng-repeat="trainning in trainnings track by $index" ng-hide="creating">
                 <h2>Treino {{$index +1}} 
-                    <ion-icon ng-click="clone(trainning)" name="copy-outline"></ion-icon>
-                    <ion-icon ng-click="deleteTraining($index)" name="trash-outline"></ion-icon>
+                    <ion-icon ng-show="edit" ng-click="clone(trainning)" name="copy-outline"></ion-icon>
+                    <ion-icon ng-show="edit" ng-click="deleteTraining($index)" name="trash-outline"></ion-icon>
                 </h2>
                  <div class="part" ng-repeat="part in trainning track by $index">
                     <div class="partnumber">{{$index + 1}}</div>
@@ -109,7 +129,7 @@
             <div id="buttons" ng-show="creating">
                 <div class="movebutton" ng-repeat="move in ptname track by $index" ng-click="addMove($index, selected)">{{move}}</div>
             </div>  
-            <div class="newtrainning" ng-click="createNewTrainning()" ng-hide="creating">
+            <div  class="newtrainning" ng-click="createNewTrainning()" ng-hide="creating || !edit">
                 <ion-icon name="add-circle-outline"></ion-icon>
             </div>
             <div class="newtrainning"  ng-show="creating && !uploading">
@@ -131,6 +151,8 @@
                 $scope.ptname = ptname;
                 $scope.creating = false;
                
+                
+                $scope.edit = (window.location.search.indexOf("edit") > 0);
                 
                 $scope.deleteTraining = function(index){
                     var txt = "" 
