@@ -78,8 +78,16 @@ const LaunchRequestHandler = {
     return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
   },
   handle(handlerInput) {
-    const speechText = "<speak>" + msg.welcomemsg[lang] + "</speak>";
-
+      
+      
+    var sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    var currentTrainning = sessionAttributes.currentTrainning;
+    
+    var speechText = "<speak>" + msg.welcomemsg[lang] + "</speak>";
+    if(currentTrainning) {
+        speechText = "<speak>" + msg.welcomebackmsg[lang] + "</speak>";
+    }    
+  
     return handlerInput.responseBuilder
       .speak(speechText)
       .withShouldEndSession(false)

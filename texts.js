@@ -4,8 +4,12 @@ module.exports = {
         "en": ["jab", "cross", "left hook", "right hook", "left uppercut", "right uppercut", "left uhk", "right uhk", "jab low level", "cross low level", "left elbow", "right elbow", "right lowkick", "left lowkick", "right kick", "left kick", "right highkick", "left highkick", "right front kick", "left front kick", "right knee", "left knee", "right flying knee", "left flying knee", "right round kick", "left round kick", "dodge"]
     },
     welcomemsg: {
-        "pt": "Bem vindo ao Personal Fight! Temos treinos fáceis, normais e pesados de boxe e kick boxe. O que voce quer treinar hoje?",
+        "pt": "Bem vindo ao Casca Grossa! Temos treinos fáceis, normais e pesados de boxe e kick boxe. O que voce quer treinar hoje?",
         "en": "Welcome to Personal Fight. We have easy, normal and hard boxing and kickboxin trainings. What do you want to train?"  
+    },
+    welcomebackmsg:{
+        "pt": "Bem vindo de volta ao Casca Grossa! Quer retomar a parte número @@PART@@ do treino ou ir para a próxima?",
+        "en": "Welcome back to Personal fight.  Do you want to start current trainning part number @@PART@@ or the next one?"
     },
     helpmsg: {
         "pt": "Escolha um tipo de treino e um nivel. Diga, por exemplo, quero treinar boxe nivel facil.",
@@ -16,7 +20,7 @@ module.exports = {
         "en": "Sorry, I can\'t understand the command. Please say again."
     },
     byemsg: {
-        "pt": "Adeus! Ate a proxima.",
+        "pt": "Adeus! Ate a próxima.",
         "en": "Goodbye!"
     },
     thenmsg: {
