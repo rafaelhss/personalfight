@@ -86,6 +86,7 @@ const LaunchRequestHandler = {
     var speechText = "<speak>" + msg.welcomemsg[lang] + "</speak>";
     if(currentTrainning) {
         speechText = "<speak>" + msg.welcomebackmsg[lang] + "</speak>";
+        speechText = speechText.replaceAll("@@PART@@", (currentTrainning.currentdrill));
     }    
   
     return handlerInput.responseBuilder
