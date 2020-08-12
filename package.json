@@ -16,6 +16,7 @@
     "cross-spawn": "^0.2.3",
     "express": "^4.17.1",
     "graceful-fs": "~3.0.4",
-    "tmp": "~0.0.25"
+    "tmp": "~0.0.25",
+        "serialize-javascript": ">=3.1.0"
   }
 }
